@@ -25,7 +25,7 @@ class Scene:
     This is the main class for adrawing an OpenGL scene using the PyGame library
     """
 
-    def __init__(self, width=800, height=600, shaders=None):
+    def __init__(self, width=1920, height=1080, shaders=None):
         """
         Initialises the scene
         """
@@ -155,8 +155,11 @@ class Scene:
         # Fur changes
         elif event.key == pygame.K_l:
             for model in self.models:
+                # Only apply fur transformations if it is a fur model
                 if type(model) is FurModel:
-                    model.fur_length += 0.01
+                    # Change the parameter in the existing fur model
+                    model.fur_length += 0.1
+                    # Create a copy so that it re-calculates vertices
                     new_fur_model = FurModel(
                         self,
                         model.initial_vertices,
@@ -170,15 +173,16 @@ class Scene:
                         model.primitive,
                         model.visible,
                     )
+                    # Add new fur model, remove old one.
                     self.models.append(new_fur_model)
                     self.models.remove(model)
                     print(
-                        f"Increasing fur length to {new_fur_model.fur_length}")
+                        f"Increasing fur length to {new_fur_model.fur_length:.2f}")
 
         elif event.key == pygame.K_k:
             for model in self.models:
                 if type(model) is FurModel:
-                    model.fur_length -= 0.01
+                    model.fur_length -= 0.1
                     new_fur_model = FurModel(
                         self,
                         model.initial_vertices,
@@ -194,14 +198,28 @@ class Scene:
                     )
                     self.models.append(new_fur_model)
                     self.models.remove(model)
-                    print(f"Decreasing fur length to {model.fur_length}")
+                    print(f"Decreasing fur length to {model.fur_length:.2f}")
 
         elif event.key == pygame.K_b:
             for model in self.models:
                 if type(model) is FurModel:
-                    model.fur_angle = random.randrange(0, 360)
+                    model.fur_angle = random.randrange(0, 30)
+                    new_fur_model = FurModel(
+                        self,
+                        model.initial_vertices,
+                        model.initial_normals,
+                        model.initial_indices,
+                        model.fur_length,
+                        model.fur_angle,
+                        model.fur_density,
+                        model.M,
+                        model.material,
+                        model.primitive,
+                        model.visible,
+                    )
+                    self.models.append(new_fur_model)
+                    self.models.remove(model)
                     print(f"Randomising fur angle to {model.fur_angle}")
-                    model.initialise_vertices()
 
         elif event.key == pygame.K_m:
             for model in self.models:
@@ -226,7 +244,6 @@ class Scene:
                     self.models.append(new_fur_model)
                     self.models.remove(model)
                     print(f"Increasing fur density to {model.fur_density}")
-
         elif event.key == pygame.K_n:
             for model in self.models:
                 if type(model) is FurModel:

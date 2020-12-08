@@ -6,13 +6,14 @@ from matutils import *
 
 from material import Material
 
+
 class BaseModel:
     '''
     Base class for all models, implementing the basic draw function for triangular meshes.
     Inherit from this to create new models.
     '''
 
-    def __init__(self, scene, M=poseMatrix(), color=[1.,1.,1.], primitive=GL_TRIANGLES, visible=True):
+    def __init__(self, scene, M=poseMatrix(), color=[1., 1., 1.], primitive=GL_TRIANGLES, visible=True):
         '''
         Initialises the model data
         '''
@@ -29,7 +30,7 @@ class BaseModel:
         self.primitive = primitive
 
         # store the object's color (deprecated now that we have per-vertex colors)
-        self.color = color
+        # self.color = color
 
         self.vertices = None
         self.indices = None
@@ -38,10 +39,10 @@ class BaseModel:
 
         # material
         self.material = Material(
-            Ka = np.array([0.1, 0.1, 0.2], 'f'),
-            Kd = np.array([0.1, 0.5, 0.1], 'f'),
-            Ks = np.array([0.9, 0.9, 1.0], 'f'),
-            Ns = 10.0
+            Ka=np.array([70/255, 47/255, 32/255], "f"),
+            Kd=np.array([86/255, 57/255, 39/255], "f"),
+            Ks=np.array([146/255, 97/255, 67/255], "f"),
+            Ns=10.0,
         )
 
         # dict of VBOs
@@ -57,7 +58,7 @@ class BaseModel:
         print('Initialising VBO for attribute {}'.format(name))
 
         # bind the GLSL program to find the attribute locations
-        #glUseProgram(self.scene.shaders.program)
+        # glUseProgram(self.scene.shaders.program)
 
         # bind the location of the attribute in the GLSL program to the next index
         # the name of the location must correspond to a 'in' variable in the GLSL vertex shader code
@@ -85,19 +86,16 @@ class BaseModel:
         glVertexAttribPointer(index=self.attributes[name], size=data.shape[1], type=GL_FLOAT, normalized=False,
                               stride=0, pointer=None)
 
-
-
     def bind_all_attributes(self):
         '''
         bind all VBOs to the corresponding attributes in the shader program. Call this before rendering.
         '''
         for attribute in self.vbos:
             # bind the buffer corresponding to the attribute
-            glBindBuffer(GL_ARRAY_BUFFER,self.vbos[attribute])
+            glBindBuffer(GL_ARRAY_BUFFER, self.vbos[attribute])
 
             # enable the attribute
             glEnableVertexAttribArray(self.attributes[attribute])
-
 
     def bind(self):
         '''
@@ -112,7 +110,8 @@ class BaseModel:
         glBindVertexArray(self.vao)
 
         if self.vertices is None:
-            print('(W) Warning in {}.bind(): No vertex array!'.format(self.__class__.__name__))
+            print('(W) Warning in {}.bind(): No vertex array!'.format(
+                self.__class__.__name__))
 
         # initialise vertex position VBO and link to shader program attribute
         self.initialise_vbo('position', self.vertices)
@@ -127,14 +126,14 @@ class BaseModel:
 
         # bind all attributes to the correct locations in the VAO
         for name in self.attributes:
-            glBindAttribLocation(self.scene.shaders.program, self.attributes[name], name)
-            print('Binding attribute {} to location {}'.format(name,self.attributes[name]))
+            glBindAttribLocation(self.scene.shaders.program,
+                                 self.attributes[name], name)
+            print('Binding attribute {} to location {}'.format(
+                name, self.attributes[name]))
 
         # finally we unbind the VAO and VBO when we're done to avoid side effects
         glBindVertexArray(0)
-        glBindBuffer(GL_ARRAY_BUFFER,0)
-
-
+        glBindBuffer(GL_ARRAY_BUFFER, 0)
 
     def draw(self, Mp, shaders):
         '''
@@ -145,8 +144,8 @@ class BaseModel:
         if self.visible:
 
             if self.vertices is None:
-                print('(W) Warning in {}.draw(): No vertex array!'.format(self.__class__.__name__))
-
+                print('(W) Warning in {}.draw(): No vertex array!'.format(
+                    self.__class__.__name__))
 
             # tell OpenGL to use this shader program for rendering
             glUseProgram(shaders.program)
@@ -154,10 +153,10 @@ class BaseModel:
             # setup the shader program and provide it the Model, View and Projection matrices to use
             # for rendering this model
             shaders.bind(
-                P = self.scene.P,
-                V = self.scene.camera.V,
-                M = np.matmul(Mp,self.M),
-                mode = self.scene.mode,
+                P=self.scene.P,
+                V=self.scene.camera.V,
+                M=np.matmul(Mp, self.M),
+                mode=self.scene.mode,
                 material=self.material,
                 light=self.scene.light
             )
@@ -168,7 +167,8 @@ class BaseModel:
             # check whether the data is stored as vertex array or index array
             if self.indices is not None:
                 # draw the data in the buffer using the index array
-                glDrawElements(self.primitive, self.indices.flatten().shape[0], GL_UNSIGNED_INT, None )
+                glDrawElements(self.primitive, self.indices.flatten(
+                ).shape[0], GL_UNSIGNED_INT, None)
                 pass
             else:
                 # draw the data in the buffer using the vertex array ordering only.
@@ -183,6 +183,4 @@ def __del__(self):
     Release all VBO objects when finished.
     '''
     for vbo in self.vbos.items():
-        glDeleteBuffers(1,vbo)
-
-
+        glDeleteBuffers(1, vbo)
