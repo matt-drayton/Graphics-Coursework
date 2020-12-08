@@ -7,17 +7,20 @@ from matutils import *
 from material import Material
 from BaseModel import BaseModel
 
+
 class FurModel(BaseModel):
-    '''
+    """
     Base class for all models, implementing the basic draw function for triangular meshes.
     Inherit from this to create new models.
-    '''
-    def __init__(self, scene, vertices, normals, indices, fur_length=0.1, fur_angle=30, fur_density=0, M=poseMatrix(), material=None, primitive=GL_LINES, visible=True):
-        '''
+    """
+
+    def __init__(self, scene, vertices, normals, indices, fur_length=0.1, fur_angle=30, fur_density=0, M=poseMatrix(), material=None, primitive=GL_LINES, visible=True,):
+        """
         Initialises the model data
-        '''
-        BaseModel.__init__(self, scene=scene, M=M, primitive=primitive, visible=visible)
-        
+        """
+        BaseModel.__init__(self, scene=scene, M=M,
+                           primitive=primitive, visible=visible)
+
         self.initial_vertices = vertices
         self.initial_normals = normals
         self.initial_indices = indices
@@ -31,31 +34,45 @@ class FurModel(BaseModel):
 
         self.vertex_colors = None
         self.material = Material(
-            Ka = np.array([0.1, 0.1, 0.2], 'f'),
-            Kd = np.array([0.1, 0.5, 0.1], 'f'),
-            Ks = np.array([0.9, 0.9, 1.0], 'f'),
-            Ns = 10.0
+            Ka=np.array([0.1, 0.1, 0.2], "f"),
+            Kd=np.array([0.1, 0.5, 0.1], "f"),
+            Ks=np.array([0.9, 0.9, 1.0], "f"),
+            Ns=10.0,
         )
         self.bind()
 
 
     def initialise_vertices(self):
-        new_vertices = np.zeros_like(self.initial_vertices)
-        new_normals = np.zeros_like(self.initial_normals)
-        for vertex, normal in zip(self.initial_vertices, self.initial_normals):
+        initial_vertices_copy = self.initial_vertices[:]
+        initial_normals_copy = self.initial_normals[:]
+        initial_indices_copy = self.initial_indices[:]
+
+        additional_vertices, additional_normals = densify_fur(
+            initial_vertices_copy, initial_normals_copy, initial_indices_copy, self.fur_density)
+
+        if additional_vertices != [] and additional_normals != []:
+            initial_vertices_copy = np.vstack(
+                (initial_vertices_copy, additional_vertices))
+            initial_normals_copy = np.vstack(
+                (initial_normals_copy, additional_normals))
+
+        new_vertices = np.zeros_like(initial_vertices_copy)
+        new_normals = np.zeros_like(initial_normals_copy)
+
+        for vertex, normal in zip(initial_vertices_copy, initial_normals_copy):
             new_vertices = np.vstack((new_vertices, vertex))
-            new_vertices = np.vstack((new_vertices, vertex + (normal * self.fur_length)))
+            new_vertices = np.vstack(
+                (new_vertices, vertex + (normal * self.fur_length)))
             new_normals = np.vstack((new_normals, normal))
             new_normals = np.vstack((new_normals, normal))
 
         self.vertices = new_vertices
         self.normals = new_normals
 
-    
     # def generate_fur_vertices(self):
     #     initial_fur = self.fur_length / 3
     #     secondary_fur = self.fur_length / (2/3)
-        
+
     #     # Deep copy
     #     temp_vertices = self.vertices[:]
     #     temp_normals = self.normals[:]
@@ -74,60 +91,80 @@ class FurModel(BaseModel):
     #             endpoint,
     #         ])
     #     self.vertices = fur_vertices
-        
-    # def draw_fur(self):
-    #     glPushMatrix()
-    #     glBegin(GL_LINES)
 
-    #     for triple in self.fur_vertices:
 
-    #         glVertex3f(triple[0][0], triple[0][1], triple[0][2])
-    #         glVertex3f(triple[1][0], triple[1][1], triple[1][2])
-
-    #         glPushMatrix()
-    #         glTranslatef(triple[1][0], triple[1][1], triple[1][2])
-
-    #         glBegin(GL_LINES)
-    #         glVertex3f(triple[1][0], triple[1][1], triple[1][2])
-    #         glVertex3f(triple[2][0], triple[2][1], triple[2][2])
-    #         glEnd()
-    #         glPopMatrix()
-    #     glEnd()
-    #     glPopMatrix()
-
-def densify_fur(vertices, normals, indices):
-    new_vertices = vertices[:]
-    new_normals = normals[:]
-    new_indices = indices[:]
-
-    vertex_faces = []
-    normal_faces = []
+def get_face_vertices(vertices, indices):
+    faces = []
     for index in indices:
-        vertex_faces.append([vertices[index[0]], vertices[index[1]], vertices[index[2]]])
-        normal_faces.append([normals[index[0]], normals[index[1]], normals[index[2]]])
-
-    for index, vertex_face in zip(indices, vertex_faces):
-        centroid_x = (vertex_face[0][0] + vertex_face[1][0] + vertex_face[2][0]) / 3
-        centroid_y = (vertex_face[0][1] + vertex_face[1][1] + vertex_face[2][1]) / 3
-        centroid_z = (vertex_face[0][2] + vertex_face[1][2] + vertex_face[2][2]) / 3
-        centroid = [centroid_x, centroid_y, centroid_z]
-
-        new_vertices = np.vstack((new_vertices, centroid))
-        last_index = len(new_vertices) - 1
-        new_face1 = [index[0], index[1], last_index]
-        new_face2 = [index[0], index[2], last_index]
-        new_face3 = [index[1], index[2], last_index]
-        new_indices = np.vstack((new_indices, new_face1))
-        new_indices = np.vstack((new_indices, new_face2))
-        new_indices = np.vstack((new_indices, new_face3))
+        face = []
+        for i in index:
+            face.append(vertices[i])
+        faces.append(face)
+    return np.array(faces)
 
 
-    for normal_face in normal_faces:
-        centroid_x = (normal_face[0][0] + normal_face[1][0] + normal_face[2][0]) / 3
-        centroid_y = (normal_face[0][1] + normal_face[1][1] + normal_face[2][1]) / 3
-        centroid_z = (normal_face[0][2] + normal_face[1][2] + normal_face[2][2]) / 3
-        centroid = [centroid_x, centroid_y, centroid_z]
-        new_normals = np.vstack((new_normals, centroid))
+def get_centroid(face):
+    return sum(face) / len(face)
 
-    return new_vertices, new_normals, new_indices
 
+def add_to_buffer(buffer, old_face, new_centroid):
+    buffer = np.vstack((buffer, new_centroid))
+    return buffer
+
+
+def densify_fur(vertices, normals, indices, density):
+    vertex_faces = get_face_vertices(vertices, indices)
+    normal_faces = get_face_vertices(normals, indices)
+
+    # vertex_centroids = np.zeros_like(vertices)
+    # normal_centroids = np.zeros_like(normals)
+
+    # for index, vertex_face, normal_face in zip(indices, vertex_faces, normal_faces):
+    #     vertex_centroid = sum(vertex_face) / len(vertex_face)
+    #     normal_centroid = sum(normal_face) / len(normal_face)
+
+    #     vertex_centroids = add_to_buffer(
+    #         vertex_centroids, vertex_face, vertex_centroid)
+
+    #     normal_centroids = add_to_buffer(
+    #         normal_centroids, normal_face, normal_centroid)
+    vertex_centroids = []
+    normal_centroids = []
+
+    for vertex_face, normal_face in zip(vertex_faces, normal_faces):
+        new_vertices, new_normals = subdivide(
+            vertex_face, normal_face, density)
+
+        vertex_centroids += new_vertices
+        normal_centroids += new_normals
+    return vertex_centroids, normal_centroids
+
+
+def subdivide(vertex_face, normal_face, n):
+    if n == 0:
+        return [], []
+
+    vertex_centroid = sum(vertex_face) / len(vertex_face)
+    normal_centroid = sum(normal_face) / len(normal_face)
+
+    vertex_centroids = [vertex_centroid]
+    normal_centroids = [normal_centroid]
+
+    next_vert = [
+        [vertex_face[0], vertex_face[1], vertex_centroid],
+        [vertex_face[0], vertex_face[2], vertex_centroid],
+        [vertex_face[1], vertex_face[2], vertex_centroid],
+    ]
+    next_normal = [
+        [normal_face[0], normal_face[1], normal_centroid],
+        [normal_face[0], normal_face[2], normal_centroid],
+        [normal_face[1], normal_face[2], normal_centroid],
+    ]
+
+    for i in range(len(next_vert)):
+        new_vertex_centroids, new_normal_centroids = subdivide(
+            next_vert[i], next_normal[i], n-1)
+        vertex_centroids += new_vertex_centroids
+        normal_centroids += new_normal_centroids
+
+    return vertex_centroids, normal_centroids

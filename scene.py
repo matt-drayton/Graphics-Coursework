@@ -172,7 +172,8 @@ class Scene:
                     )
                     self.models.append(new_fur_model)
                     self.models.remove(model)
-                    print(f"Increasing fur length to {new_fur_model.fur_length}")
+                    print(
+                        f"Increasing fur length to {new_fur_model.fur_length}")
 
         elif event.key == pygame.K_k:
             for model in self.models:
@@ -209,19 +210,46 @@ class Scene:
                 # else:
                 if type(model) is FurModel:
                     model.fur_density += 1
-
+                    new_fur_model = FurModel(
+                        self,
+                        model.initial_vertices,
+                        model.initial_normals,
+                        model.initial_indices,
+                        model.fur_length,
+                        model.fur_angle,
+                        model.fur_density,
+                        model.M,
+                        model.material,
+                        model.primitive,
+                        model.visible,
+                    )
+                    self.models.append(new_fur_model)
+                    self.models.remove(model)
                     print(f"Increasing fur density to {model.fur_density}")
-                    model.initialise_vertices()
 
         elif event.key == pygame.K_n:
             for model in self.models:
-                if model.fur_density > 0:
-                    model.fur_density -= 1
-                    print(f"Decreasing fur density to {model.fur_density}")
-                    model.generate_fur_vertices()
-                else:
-                    print("Cannot decrease fur density any further.")
-
+                if type(model) is FurModel:
+                    if model.fur_density > 0:
+                        model.fur_density -= 1
+                        new_fur_model = FurModel(
+                            self,
+                            model.initial_vertices,
+                            model.initial_normals,
+                            model.initial_indices,
+                            model.fur_length,
+                            model.fur_angle,
+                            model.fur_density,
+                            model.M,
+                            model.material,
+                            model.primitive,
+                            model.visible,
+                        )
+                        self.models.append(new_fur_model)
+                        self.models.remove(model)
+                        print(f"Decreasing fur density to {model.fur_density}")
+                    else:
+                        print("Cannot decrease fur density any further.")
         # flag to switch wireframe rendering
         elif event.key == pygame.K_0:
             if self.wireframe:

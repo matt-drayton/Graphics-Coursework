@@ -10,6 +10,7 @@ from models2D import *
 
 from FurModel import FurModel
 
+
 class DrawModelFromMesh(BaseModel):
     '''
     Base class for all models, inherit from this to create new models
@@ -58,7 +59,8 @@ class DrawModelFromMesh(BaseModel):
             self.primitive = GL_QUADS
 
         else:
-            print('(E) Error in DrawModelFromObjFile.__init__(): index array must have 3 (triangles) or 4 (quads) columns, found {}!'.format(self.indices.shape[1]))
+            print('(E) Error in DrawModelFromObjFile.__init__(): index array must have 3 (triangles) or 4 (quads) columns, found {}!'.format(
+                self.indices.shape[1]))
             raise
 
         # default vertex colors to one (white)
@@ -80,9 +82,10 @@ if __name__ == '__main__':
 
     meshes = load_obj_file('models/bunny_world.obj')
     bunny = DrawModelFromMesh(scene=scene, M=poseMatrix(), mesh=meshes[0])
-    
+
     scene.add_model(bunny)
-    fur_model = FurModel(scene=scene, vertices=bunny.vertices, normals=bunny.normals, indices=bunny.indices, M=poseMatrix(), material=bunny.material)
+    fur_model = FurModel(scene=scene, vertices=bunny.vertices, normals=bunny.normals,
+                         indices=bunny.indices, M=poseMatrix(), material=bunny.material)
 
     scene.add_model(fur_model)
 
