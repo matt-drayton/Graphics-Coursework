@@ -66,3 +66,39 @@ class FurModel(BaseModel):
         glEnd()
         glPopMatrix()
 
+def densify_fur(vertices, normals, indices):
+    new_vertices = vertices[:]
+    new_normals = normals[:]
+    new_indices = indices[:]
+
+    vertex_faces = []
+    normal_faces = []
+    for index in indices:
+        vertex_faces.append([vertices[index[0]], vertices[index[1]], vertices[index[2]]])
+        normal_faces.append([normals[index[0]], normals[index[1]], normals[index[2]]])
+
+    for index, vertex_face in zip(indices, vertex_faces):
+        centroid_x = (vertex_face[0][0] + vertex_face[1][0] + vertex_face[2][0]) / 3
+        centroid_y = (vertex_face[0][1] + vertex_face[1][1] + vertex_face[2][1]) / 3
+        centroid_z = (vertex_face[0][2] + vertex_face[1][2] + vertex_face[2][2]) / 3
+        centroid = [centroid_x, centroid_y, centroid_z]
+
+        new_vertices = np.vstack((new_vertices, centroid))
+        last_index = len(new_vertices) - 1
+        new_face1 = [index[0], index[1], last_index]
+        new_face2 = [index[0], index[2], last_index]
+        new_face3 = [index[1], index[2], last_index]
+        new_indices = np.vstack((new_indices, new_face1))
+        new_indices = np.vstack((new_indices, new_face2))
+        new_indices = np.vstack((new_indices, new_face3))
+
+
+    for normal_face in normal_faces:
+        centroid_x = (normal_face[0][0] + normal_face[1][0] + normal_face[2][0]) / 3
+        centroid_y = (normal_face[0][1] + normal_face[1][1] + normal_face[2][1]) / 3
+        centroid_z = (normal_face[0][2] + normal_face[1][2] + normal_face[2][2]) / 3
+        centroid = [centroid_x, centroid_y, centroid_z]
+        new_normals = np.vstack((new_normals, centroid))
+
+    return new_vertices, new_normals, new_indices
+
