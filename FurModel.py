@@ -14,7 +14,7 @@ class FurModel(BaseModel):
     Inherit from this to create new models.
     """
 
-    def __init__(self, scene, vertices, normals, indices, fur_length=0.1, fur_angle=30, fur_density=0, M=poseMatrix(), material=None, primitive=GL_LINES, visible=True,):
+    def __init__(self, scene, vertices, normals, indices, fur_length=0.1, fur_angle=30, angle1=30, angle2=30, fur_density=0, M=poseMatrix(), material=None, primitive=GL_LINES, visible=True,):
         """
         Initialises the model data
         """
@@ -28,6 +28,9 @@ class FurModel(BaseModel):
         self.fur_length = fur_length
         self.fur_angle = fur_angle
         self.fur_density = fur_density
+
+        self.angle1 = angle1
+        self.angle2 = angle2
 
         self.initialise_vertices()
         # self.indices = indices
@@ -60,8 +63,19 @@ class FurModel(BaseModel):
 
         for vertex, normal in zip(initial_vertices_copy, initial_normals_copy):
             new_vertices = np.vstack((new_vertices, vertex))
+            midpoint = vertex + (normal * self.fur_length)
+            endpoint = midpoint
+
+            endpoint[0] += (np.cos(self.fur_angle) * self.fur_length)
+            endpoint[1] += (np.sin(self.fur_angle) * self.fur_length)
+            endpoint[2] += self.fur_length
+
             new_vertices = np.vstack(
-                (new_vertices, vertex + (normal * self.fur_length)))
+                (new_vertices, midpoint))
+            new_vertices = np.vstack(
+                (new_vertices, midpoint))
+            new_vertices = np.vstack(
+                (new_vertices, endpoint))
             new_normals = np.vstack((new_normals, normal))
             new_normals = np.vstack((new_normals, normal))
 
