@@ -12,59 +12,88 @@ class FurModel(BaseModel):
     Base class for all models, implementing the basic draw function for triangular meshes.
     Inherit from this to create new models.
     '''
-
-    def __init__(self, scene, M=poseMatrix(), color=[1.,1.,1.], primitive=GL_TRIANGLES, visible=True):
+    def __init__(self, scene, vertices, normals, indices, fur_length=0.1, fur_angle=30, fur_density=0, M=poseMatrix(), material=None, primitive=GL_LINES, visible=True):
         '''
         Initialises the model data
         '''
-
-        self.fur_length = 0.1
-        self.fur_angle = 0
-        self.fur_density = 0
-        self.fur_vertices = None
-
-    def generate_fur_vertices(self):
-        initial_fur = self.fur_length / 3
-        secondary_fur = self.fur_length / (2/3)
+        BaseModel.__init__(self, scene=scene, M=M, primitive=primitive, visible=visible)
         
-        # Deep copy
-        temp_vertices = self.vertices[:]
-        temp_normals = self.normals[:]
-        temp_indices = self.indices[:]
+        self.initial_vertices = vertices
+        self.initial_normals = normals
+        self.initial_indices = indices
 
-        for i in range(self.fur_density):
-            temp_vertices, temp_normals, temp_indices = densify_fur(temp_vertices, temp_normals, temp_indices)
+        self.fur_length = fur_length
+        self.fur_angle = fur_angle
+        self.fur_density = fur_density
 
-        fur_vertices = []
-        for vertex, normal in zip(temp_vertices, temp_normals):
-            midpoint = [vertex[0]+(normal[0]*initial_fur), vertex[1]+(normal[1]*initial_fur), vertex[2]+(normal[2]*initial_fur)]
-            endpoint = [midpoint[0]+(secondary_fur*np.cos(self.fur_angle)), midpoint[1]+(secondary_fur*np.sin(self.fur_angle)), midpoint[2]+(secondary_fur)]
-            fur_vertices.append([
-                vertex,
-                midpoint,
-                endpoint,
-            ])
-        self.fur_vertices = fur_vertices
+        self.initialise_vertices()
+        # self.indices = indices
+
+        self.vertex_colors = None
+        self.material = Material(
+            Ka = np.array([0.1, 0.1, 0.2], 'f'),
+            Kd = np.array([0.1, 0.5, 0.1], 'f'),
+            Ks = np.array([0.9, 0.9, 1.0], 'f'),
+            Ns = 10.0
+        )
+        self.bind()
+
+
+    def initialise_vertices(self):
+        new_vertices = np.zeros_like(self.initial_vertices)
+        new_normals = np.zeros_like(self.initial_normals)
+        for vertex, normal in zip(self.initial_vertices, self.initial_normals):
+            new_vertices = np.vstack((new_vertices, vertex))
+            new_vertices = np.vstack((new_vertices, vertex + (normal * self.fur_length)))
+            new_normals = np.vstack((new_normals, normal))
+            new_normals = np.vstack((new_normals, normal))
+
+        self.vertices = new_vertices
+        self.normals = new_normals
+
+    
+    # def generate_fur_vertices(self):
+    #     initial_fur = self.fur_length / 3
+    #     secondary_fur = self.fur_length / (2/3)
         
-    def draw_fur(self):
-        glPushMatrix()
-        glBegin(GL_LINES)
+    #     # Deep copy
+    #     temp_vertices = self.vertices[:]
+    #     temp_normals = self.normals[:]
+    #     temp_indices = self.indices[:]
 
-        for triple in self.fur_vertices:
+    #     for i in range(self.fur_density):
+    #         temp_vertices, temp_normals, temp_indices = densify_fur(temp_vertices, temp_normals, temp_indices)
 
-            glVertex3f(triple[0][0], triple[0][1], triple[0][2])
-            glVertex3f(triple[1][0], triple[1][1], triple[1][2])
+    #     fur_vertices = []
+    #     for vertex, normal in zip(temp_vertices, temp_normals):
+    #         midpoint = [vertex[0]+(normal[0]*initial_fur), vertex[1]+(normal[1]*initial_fur), vertex[2]+(normal[2]*initial_fur)]
+    #         endpoint = [midpoint[0]+(secondary_fur*np.cos(self.fur_angle)), midpoint[1]+(secondary_fur*np.sin(self.fur_angle)), midpoint[2]+(secondary_fur)]
+    #         fur_vertices.append([
+    #             vertex,
+    #             midpoint,
+    #             endpoint,
+    #         ])
+    #     self.vertices = fur_vertices
+        
+    # def draw_fur(self):
+    #     glPushMatrix()
+    #     glBegin(GL_LINES)
 
-            glPushMatrix()
-            glTranslatef(triple[1][0], triple[1][1], triple[1][2])
+    #     for triple in self.fur_vertices:
 
-            glBegin(GL_LINES)
-            glVertex3f(triple[1][0], triple[1][1], triple[1][2])
-            glVertex3f(triple[2][0], triple[2][1], triple[2][2])
-            glEnd()
-            glPopMatrix()
-        glEnd()
-        glPopMatrix()
+    #         glVertex3f(triple[0][0], triple[0][1], triple[0][2])
+    #         glVertex3f(triple[1][0], triple[1][1], triple[1][2])
+
+    #         glPushMatrix()
+    #         glTranslatef(triple[1][0], triple[1][1], triple[1][2])
+
+    #         glBegin(GL_LINES)
+    #         glVertex3f(triple[1][0], triple[1][1], triple[1][2])
+    #         glVertex3f(triple[2][0], triple[2][1], triple[2][2])
+    #         glEnd()
+    #         glPopMatrix()
+    #     glEnd()
+    #     glPopMatrix()
 
 def densify_fur(vertices, normals, indices):
     new_vertices = vertices[:]

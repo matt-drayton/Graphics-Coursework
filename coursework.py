@@ -8,6 +8,7 @@ from BaseModel import *
 
 from models2D import *
 
+from FurModel import FurModel
 
 class DrawModelFromMesh(BaseModel):
     '''
@@ -78,10 +79,12 @@ if __name__ == '__main__':
     scene = Scene()
 
     meshes = load_obj_file('models/bunny_world.obj')
+    bunny = DrawModelFromMesh(scene=scene, M=poseMatrix(), mesh=meshes[0])
+    
+    scene.add_model(bunny)
+    fur_model = FurModel(scene=scene, vertices=bunny.vertices, normals=bunny.normals, indices=bunny.indices, M=poseMatrix(), material=bunny.material)
 
-    scene.add_models_list(
-            [DrawModelFromMesh(scene=scene, M=poseMatrix(), mesh=mesh) for mesh in meshes]
-    )
+    scene.add_model(fur_model)
 
     # starts drawing the scene
     scene.run()

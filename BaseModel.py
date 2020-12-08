@@ -134,7 +134,6 @@ class BaseModel:
         glBindVertexArray(0)
         glBindBuffer(GL_ARRAY_BUFFER,0)
 
-        self.generate_fur_vertices()
 
 
     def draw(self, Mp, shaders):
