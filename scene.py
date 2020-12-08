@@ -209,24 +209,26 @@ class Scene:
                 #     print("Cannot increase fur density any further")
                 # else:
                 if type(model) is FurModel:
-                    model.fur_density += 1
-                    new_fur_model = FurModel(
-                        self,
-                        model.initial_vertices,
-                        model.initial_normals,
-                        model.initial_indices,
-                        model.fur_length,
-                        model.fur_angle,
-                        model.fur_density,
-                        model.M,
-                        model.material,
-                        model.primitive,
-                        model.visible,
-                    )
-                    self.models.append(new_fur_model)
-                    self.models.remove(model)
-                    print(f"Increasing fur density to {model.fur_density}")
-
+                    if model.fur_density < 1:
+                        model.fur_density += 1
+                        new_fur_model = FurModel(
+                            self,
+                            model.initial_vertices,
+                            model.initial_normals,
+                            model.initial_indices,
+                            model.fur_length,
+                            model.fur_angle,
+                            model.fur_density,
+                            model.M,
+                            model.material,
+                            model.primitive,
+                            model.visible,
+                        )
+                        self.models.append(new_fur_model)
+                        self.models.remove(model)
+                        print(f"Increasing fur density to {model.fur_density}")
+                    else:
+                        print("Cannot increase fur density any further.")
         elif event.key == pygame.K_n:
             for model in self.models:
                 if type(model) is FurModel:

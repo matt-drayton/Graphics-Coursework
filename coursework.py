@@ -46,7 +46,12 @@ class DrawModelFromMesh(BaseModel):
         self.normals = mesh.normals
 
         # and save the material information
-        self.material = mesh.material
+        self.material = Material(
+            Ka=np.array([28/255, 18/255, 12/255], "f"),
+            Kd=np.array([48/255, 32/255, 22/255], "f"),
+            Ks=np.array([58/255, 38/255, 27/255], "f"),
+            Ns=10.0,
+        )
 
         # we force a bit of specularity to make it more visible
         self.material.Ns = 15.0
